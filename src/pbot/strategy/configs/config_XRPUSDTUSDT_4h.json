@@ -1,0 +1,29 @@
+{
+    "market": {
+        "symbol": "XRP/USDT:USDT",
+        "timeframe": "4h",
+        "htf": "1d"
+    },
+    "strategy": {
+        "length": 38,
+        "rsi_weight": 1.2000000000000002,
+        "wick_weight": 1.0,
+        "use_adx_filter": false,
+        "adx_threshold": 34,
+        "min_score": 0.5
+    },
+    "risk": {
+        "risk_reward_ratio": 3.360931546495809,
+        "risk_per_trade_pct": 9.238964975721562,
+        "leverage": 13,
+        "atr_multiplier_sl": 1.9337772445872017,
+        "min_sl_pct": 1.9500006527688405,
+        "trailing_stop_activation_rr": 1.7072118783935446,
+        "trailing_stop_callback_rate_pct": 2.8176897300300783,
+        "margin_mode": "isolated"
+    },
+    "behavior": {
+        "use_longs": true,
+        "use_shorts": true
+    }
+}

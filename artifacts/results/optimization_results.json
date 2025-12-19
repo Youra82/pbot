@@ -1,0 +1,11 @@
+{
+    "optimal_portfolio": [
+        "config_SOLUSDTUSDT_30m.json",
+        "config_AAVEUSDTUSDT_30m.json",
+        "config_ADAUSDTUSDT_30m.json",
+        "config_DOGEUSDTUSDT_15m.json",
+        "config_ETHUSDTUSDT_6h.json",
+        "config_XRPUSDTUSDT_30m.json",
+        "config_BTCUSDTUSDT_30m.json"
+    ]
+}

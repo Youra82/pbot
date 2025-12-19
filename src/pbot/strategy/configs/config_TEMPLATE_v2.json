@@ -1,0 +1,57 @@
+{
+    "market": {
+        "symbol": "BTC/USDT:USDT",
+        "timeframe": "30m",
+        "htf": "2h"
+    },
+    "strategy": {
+        "length": 14,
+        "rsi_weight": 1.5,
+        "wick_weight": 1.0,
+        "use_adx_filter": true,
+        "adx_threshold": 20,
+        "min_score": 0.8,
+        "use_mtf": true,
+        
+        "_comment_volume_filter": "Neu: Volumen-Filter verhindert Trades bei Low-Liquidity",
+        "use_volume_filter": true,
+        "min_volume_ratio": 0.5,
+        "volume_lookback": 20,
+        "allow_low_volume": false,
+        
+        "_comment_regime": "Optional: Market-Regime Detection (Beta)",
+        "use_regime_detection": false,
+        "regime_settings": {
+            "adx_trending": 25,
+            "adx_strong": 40,
+            "atr_high_percentile": 80,
+            "atr_low_percentile": 20,
+            "bb_squeeze": 0.02
+        }
+    },
+    "risk": {
+        "_comment_limits": "Verschärfte Grenzen: Max 1.5% Risk, Max 15x Leverage",
+        "risk_reward_ratio": 2.5,
+        "risk_per_trade_pct": 1.0,
+        "leverage": 10,
+        
+        "atr_multiplier_sl": 2.0,
+        "min_sl_pct": 0.5,
+        
+        "trailing_stop_activation_rr": 1.5,
+        "trailing_stop_callback_rate_pct": 0.5,
+        
+        "margin_mode": "isolated"
+    },
+    "behavior": {
+        "use_longs": true,
+        "use_shorts": true
+    },
+    "_metadata": {
+        "version": "2.0",
+        "created": "2024-12-19",
+        "optimized_on": "2023-01-01 to 2024-12-31",
+        "walk_forward_tested": false,
+        "notes": "Template mit allen neuen Features"
+    }
+}

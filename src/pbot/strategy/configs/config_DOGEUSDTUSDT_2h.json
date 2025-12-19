@@ -1,0 +1,29 @@
+{
+    "market": {
+        "symbol": "DOGE/USDT:USDT",
+        "timeframe": "2h",
+        "htf": "1d"
+    },
+    "strategy": {
+        "length": 40,
+        "rsi_weight": 0.5,
+        "wick_weight": 0.8,
+        "use_adx_filter": false,
+        "adx_threshold": 31,
+        "min_score": 0.8
+    },
+    "risk": {
+        "risk_reward_ratio": 4.643761814782015,
+        "risk_per_trade_pct": 9.951175823008564,
+        "leverage": 11,
+        "atr_multiplier_sl": 3.7460429760431633,
+        "min_sl_pct": 1.5566532524987404,
+        "trailing_stop_activation_rr": 2.965170634625901,
+        "trailing_stop_callback_rate_pct": 0.883749687612476,
+        "margin_mode": "isolated"
+    },
+    "behavior": {
+        "use_longs": true,
+        "use_shorts": true
+    }
+}
