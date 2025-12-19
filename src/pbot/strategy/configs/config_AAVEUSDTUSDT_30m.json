@@ -1,0 +1,29 @@
+{
+    "market": {
+        "symbol": "AAVE/USDT:USDT",
+        "timeframe": "30m",
+        "htf": "2h"
+    },
+    "strategy": {
+        "length": 40,
+        "rsi_weight": 1.1,
+        "wick_weight": 1.0,
+        "use_adx_filter": false,
+        "adx_threshold": 34,
+        "min_score": 0.8
+    },
+    "risk": {
+        "risk_reward_ratio": 3.856987688947891,
+        "risk_per_trade_pct": 9.999148072356796,
+        "leverage": 9,
+        "atr_multiplier_sl": 3.8560858068393857,
+        "min_sl_pct": 0.6181064546886723,
+        "trailing_stop_activation_rr": 1.2837364163078118,
+        "trailing_stop_callback_rate_pct": 2.167998540601972,
+        "margin_mode": "isolated"
+    },
+    "behavior": {
+        "use_longs": true,
+        "use_shorts": true
+    }
+}

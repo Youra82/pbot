@@ -1,0 +1,29 @@
+{
+    "market": {
+        "symbol": "ADA/USDT:USDT",
+        "timeframe": "6h",
+        "htf": "1d"
+    },
+    "strategy": {
+        "length": 40,
+        "rsi_weight": 0.9,
+        "wick_weight": 0.6,
+        "use_adx_filter": false,
+        "adx_threshold": 24,
+        "min_score": 0.8
+    },
+    "risk": {
+        "risk_reward_ratio": 1.6130228972619323,
+        "risk_per_trade_pct": 6.7836376900288835,
+        "leverage": 19,
+        "atr_multiplier_sl": 3.9338724640732785,
+        "min_sl_pct": 1.9676096574562432,
+        "trailing_stop_activation_rr": 1.9028975069608822,
+        "trailing_stop_callback_rate_pct": 0.8501314255316039,
+        "margin_mode": "isolated"
+    },
+    "behavior": {
+        "use_longs": true,
+        "use_shorts": true
+    }
+}
