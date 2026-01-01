@@ -20,6 +20,17 @@
 
 PBot ist ein hochentwickelter Trading-Bot, der Smart Money Concepts (SMC) mit klassischer technischer Analyse kombiniert. Das System nutzt Predictor-basierte Signale mit RSI, ADX, Volume-Filtern und Multi-Timeframe-Analyse für präzise Ein- und Ausstiegspunkte.
 
+### 🧭 Trading-Logik (Kurzfassung)
+- **SMC-Core**: Identifiziert Liquiditätszonen, Breaker-Blocks und Marktstrukturbrüche; kombiniert mit RSI/ADX für Trendkraft.
+- **Predictor-Score**: RSI + Wick-Analyse + Volumen-Ratio + Supertrend werden gewichtet aggregiert (siehe `predictor_settings`).
+- **MTF-Bestätigung**: Höherer Timeframe dient als Bias-Filter, um Trades nur in Trendrichtung zuzulassen.
+- **Risk Layer**: Fixer SL/TP, optionales Trail; Positionsgröße abhängig von Volatilität und Konto-Risk.
+
+Architektur-Skizze:
+```
+OHLCV → Feature-Engine (RSI/ADX/Vol/Wick) → Predictor-Score → Bias-Filter (MTF) → Risk Engine → Order Router (CCXT)
+```
+
 ### 🎯 Hauptmerkmale
 
 - **🧠 Smart Money Concepts**: Professionelle SMC-basierte Trading-Strategie
@@ -263,6 +274,13 @@ cp artifacts/results/best_config_BTC_30m.json src/pbot/strategy/configs/
 ```bash
 # Master Runner starten (alle aktiven Strategien)
 python master_runner.py
+```
+
+### Manuell starten / Cronjob testen
+Sofortiger Start ohne Cron-Wartezeit:
+
+```bash
+cd /home/ubuntu/pbot && /home/ubuntu/pbot/.venv/bin/python3 /home/ubuntu/pbot/master_runner.py
 ```
 
 Der Master Runner:
