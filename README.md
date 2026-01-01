@@ -21,6 +21,7 @@
 PBot ist ein hochentwickelter Trading-Bot, der Smart Money Concepts (SMC) mit klassischer technischer Analyse kombiniert. Das System nutzt Predictor-basierte Signale mit RSI, ADX, Volume-Filtern und Multi-Timeframe-Analyse für präzise Ein- und Ausstiegspunkte.
 
 ### 🧭 Trading-Logik (Kurzfassung)
+- **Tageskerzen-Predictor**: Prognostiziert die nächste Daily-Candle-Richtung (bias long/short) und legt damit das Grund-Sentiment fest.
 - **SMC-Core**: Identifiziert Liquiditätszonen, Breaker-Blocks und Marktstrukturbrüche; kombiniert mit RSI/ADX für Trendkraft.
 - **Predictor-Score**: RSI + Wick-Analyse + Volumen-Ratio + Supertrend werden gewichtet aggregiert (siehe `predictor_settings`).
 - **MTF-Bestätigung**: Höherer Timeframe dient als Bias-Filter, um Trades nur in Trendrichtung zuzulassen.
