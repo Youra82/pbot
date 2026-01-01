@@ -16,7 +16,6 @@ from pbot.strategy.trade_logic import get_pbot_signal
 from pbot.utils.exchange import Exchange
 from pbot.utils.telegram import send_message
 from pbot.utils.timeframe_utils import determine_htf
-from pbot.utils.risk_manager import get_risk_manager
 
 # --------------------------------------------------------------------------- #
 # Pfade
@@ -145,27 +144,11 @@ def check_and_open_new_position(exchange, model, scaler, params, telegram_config
             return
 
         # --------------------------------------------------- #
-        # 1b. Portfolio Risk Manager Check
+        # 1b. Risiko nur lokal deckeln (kein Portfolio-Blocker)
         # --------------------------------------------------- #
         risk_params = params.get('risk', {})
         raw_risk_pct = risk_params.get('risk_per_trade_pct', 1.0)
         effective_risk_pct = min(raw_risk_pct, 2.0)  # Hard Cap bleibt bei 2%
-        
-        risk_manager = get_risk_manager({
-            'max_concurrent_positions': 3,
-            'max_daily_loss_pct': 5.0,
-            'max_total_risk_pct': 4.0,
-            'min_adjusted_risk_pct': 0.1,
-        })
-        
-        can_trade, reason, allowed_risk_pct = risk_manager.can_open_position(symbol, effective_risk_pct, logger)
-        if not can_trade:
-            logger.warning(f"Portfolio Risk Check fehlgeschlagen: {reason}")
-            return
-
-        if allowed_risk_pct != effective_risk_pct:
-            logger.info(f"Passe Risiko auf {allowed_risk_pct:.2f}% an (statt {effective_risk_pct:.2f}%)")
-            effective_risk_pct = allowed_risk_pct
 
         # --------------------------------------------------- #
         # 2. Margin & Leverage setzen
@@ -337,9 +320,6 @@ def check_and_open_new_position(exchange, model, scaler, params, telegram_config
             exchange.place_trigger_market_order(symbol, tsl_side, contracts, tp_rounded, {'reduceOnly': True})
 
         set_trade_lock(symbol_timeframe)
-        
-        # Portfolio Risk Manager: Position registrieren
-        risk_manager.register_position(symbol, effective_risk_pct, logger)
 
         # --------------------------------------------------- #
         # 7. Telegram-Benachrichtigung (NEU: HTML Format)
@@ -354,9 +334,6 @@ def check_and_open_new_position(exchange, model, scaler, params, telegram_config
             is_choppy = analysis_result.get('is_choppy', False)
             choppy_txt = "⚠️ Choppy" if is_choppy else "✅ Stable"
             
-            # Portfolio Status vom Risk Manager
-            portfolio_status = risk_manager.get_status()
-
             # HTML Formatierung (Kein MarkdownV2 mehr!)
             msg = (
                 f"🚀 <b>PBOT SIGNAL</b>: {symbol} ({timeframe})\n"
@@ -367,10 +344,7 @@ def check_and_open_new_position(exchange, model, scaler, params, telegram_config
                 f"🛑 SL: ${sl_r:.6f} (-{sl_dist_pct:.2f}%)\n"
                 f"📈 TSL Aktivierung: ${act_price_rounded:.6f} (RR: {act_rr})\n"
                 f"⚙️ Hebel: {leverage}x\n"
-                f"🛡️ Risiko: {risk_pct*100:.1f}% ({risk_usdt:.2f} USDT)\n"
-                f"--------------------------------\n"
-                f"📊 Portfolio: {portfolio_status['active_positions_count']}/3 Positionen\n"
-                f"📉 Daily PnL: {portfolio_status['daily_pnl_pct']:+.2f}%"
+                f"🛡️ Risiko: {risk_pct*100:.1f}% ({risk_usdt:.2f} USDT)"
             )
             send_message(telegram_config['bot_token'], telegram_config['chat_id'], msg)
 
