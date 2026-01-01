@@ -6,7 +6,7 @@ import ta
 class PredictorEngine:
     """
     Python-Implementierung des 'Next Candle Predictor PRO' Pine Scripts.
-    UPDATE: Mit übergeordnetem Supertrend-Filter (HTF-basiert).
+    Nutzt übergeordneten HTF-Supertrend-Filter als primärer Trend-Filter.
     """
     def __init__(self, settings: dict):
         self.length = settings.get('length', 14)
@@ -22,10 +22,7 @@ class PredictorEngine:
         self.volume_lookback = settings.get('volume_lookback', 20)
         # -----------------------------------
         
-        # --- Supertrend Einstellungen ---
-        # Neuer Ansatz: HTF-basierter Supertrend-Filter (übergeordneter Trend)
-        self.use_supertrend_filter = settings.get('use_supertrend_filter', True)
-        self.use_htf_supertrend = settings.get('use_htf_supertrend', True)  # Neu: Nutze HTF Supertrend
+        # --- Supertrend Einstellungen (HTF-basiert - IMMER aktiv) ---
         self.st_factor = settings.get('supertrend_factor', 3.0)
         self.st_period = settings.get('supertrend_period', 10)
 
@@ -117,7 +114,7 @@ class PredictorEngine:
     def get_score(self, row, mtf_bullish=None, htf_st_trend=None):
         """
         Berechnet den Score für eine einzelne Kerze.
-        Nutzt Indikatoren UND das übergeordnete Supertrend-Veto (HTF-basiert).
+        HTF-Supertrend ist der primäre Trend-Filter (IMMER aktiv wenn verfügbar).
         """
         # 1. Trend Score (EMA Cross)
         bullish_ema = row['ema_fast'] > row['ema_slow']
@@ -159,39 +156,36 @@ class PredictorEngine:
         raw_score = trend_score + rsi_bias + rej_bias + mtf_penalty
         veto_reason = None
         
-        # 5. HTF-Supertrend Veto (Der "Boss"-Filter auf übergeordnetem Timeframe)
-        if self.use_supertrend_filter and self.use_htf_supertrend:
-            if htf_st_trend is not None:
-                # Fall A: HTF-Supertrend Grün (Nur Longs erlaubt)
-                if htf_st_trend == 1:
-                    if raw_score < 0: 
-                        # Signal ist Short (negativ), aber HTF-Trend ist Grün
-                        veto_reason = "HTF-ST gruen: blockiert Short-Bias"
-                        return 0.0, veto_reason
-                    
-                # Fall B: HTF-Supertrend Rot (Nur Shorts erlaubt)
-                elif htf_st_trend == -1:
-                    if raw_score > 0:
-                        # Signal ist Long (positiv), aber HTF-Trend ist Rot
-                        veto_reason = "HTF-ST rot: blockiert Long-Bias"
-                        return 0.0, veto_reason
+        # 5. HTF-Supertrend Veto (Der primäre "Boss"-Filter - IMMER aktiv)
+        if htf_st_trend is not None:
+            # Fall A: HTF-Supertrend Grün (Nur Longs erlaubt)
+            if htf_st_trend == 1:
+                if raw_score < 0: 
+                    # Signal ist Short (negativ), aber HTF-Trend ist Grün
+                    veto_reason = "HTF-ST gruen: blockiert Short-Bias"
+                    return 0.0, veto_reason
+                
+            # Fall B: HTF-Supertrend Rot (Nur Shorts erlaubt)
+            elif htf_st_trend == -1:
+                if raw_score > 0:
+                    # Signal ist Long (positiv), aber HTF-Trend ist Rot
+                    veto_reason = "HTF-ST rot: blockiert Long-Bias"
+                    return 0.0, veto_reason
 
         return raw_score, veto_reason
 
     def analyze(self, df: pd.DataFrame, htf_df: pd.DataFrame = None):
         """
         Hauptfunktion: Verarbeitet die Daten und gibt die letzte Vorhersage zurück.
-        HTF-Supertrend wird als übergeordneter Filter verwendet.
+        HTF-Supertrend ist IMMER der primäre Trend-Filter (keine lokale ST mehr).
         """
         if df.empty: return None
 
         df = self.calculate_indicators(df.copy())
         current_candle = df.iloc[-1]
 
-        # MTF & HTF-Supertrend Logik
+        # MTF Logik
         mtf_bullish = None
-        htf_st_trend = None
-        
         if self.use_mtf and htf_df is not None and not htf_df.empty:
             htf_copy = htf_df.copy()
             htf_copy['ema_mtf'] = ta.trend.ema_indicator(htf_copy['close'], window=self.length * 2)
@@ -199,8 +193,9 @@ class PredictorEngine:
             if not pd.isna(last_htf['ema_mtf']):
                 mtf_bullish = last_htf['close'] > last_htf['ema_mtf']
         
-        # HTF-Supertrend Berechnung (übergeordneter Filter)
-        if self.use_supertrend_filter and self.use_htf_supertrend and htf_df is not None and not htf_df.empty:
+        # HTF-Supertrend Berechnung (IMMER - primärer Trend-Filter)
+        htf_st_trend = None
+        if htf_df is not None and not htf_df.empty:
             htf_trend = self._calculate_supertrend(htf_df.copy())
             if htf_trend is not None and len(htf_trend) > 0:
                 htf_st_trend = htf_trend[-1]  # Letzter Wert des HTF-Trends
@@ -237,6 +232,6 @@ class PredictorEngine:
             "atr": current_candle['atr'],
             "close": current_candle['close'],
             "mtf_bullish": mtf_bullish,
-            "htf_st_trend": htf_st_trend,  # Neuer Output: Übergeordneter Supertrend
+            "htf_st_trend": htf_st_trend,
             "volume_ratio": current_candle.get('volume_ratio', 1.0)
         }
