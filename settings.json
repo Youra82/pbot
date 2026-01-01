@@ -45,5 +45,20 @@
                 "active": true
             }
         ]
+    },
+    "predictor_settings": {
+        "length": 14,
+        "rsi_weight": 1.5,
+        "wick_weight": 1.0,
+        "use_adx_filter": true,
+        "adx_threshold": 20,
+        "use_mtf": true,
+        "use_volume_filter": true,
+        "min_volume_ratio": 0.5,
+        "volume_lookback": 20,
+        "use_supertrend_filter": true,
+        "use_htf_supertrend": true,
+        "supertrend_factor": 3.0,
+        "supertrend_period": 10
     }
 }

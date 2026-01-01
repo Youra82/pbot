@@ -6,7 +6,7 @@ import ta
 class PredictorEngine:
     """
     Python-Implementierung des 'Next Candle Predictor PRO' Pine Scripts.
-    UPDATE: Mit integriertem Supertrend-Filter (Veto-Logik).
+    UPDATE: Mit übergeordnetem Supertrend-Filter (HTF-basiert).
     """
     def __init__(self, settings: dict):
         self.length = settings.get('length', 14)
@@ -23,13 +23,68 @@ class PredictorEngine:
         # -----------------------------------
         
         # --- Supertrend Einstellungen ---
-        # Wir aktivieren den Filter standardmäßig
-        self.use_supertrend_filter = settings.get('use_supertrend_filter', True) 
-        self.st_factor = 3.0
-        self.st_period = 10
+        # Neuer Ansatz: HTF-basierter Supertrend-Filter (übergeordneter Trend)
+        self.use_supertrend_filter = settings.get('use_supertrend_filter', True)
+        self.use_htf_supertrend = settings.get('use_htf_supertrend', True)  # Neu: Nutze HTF Supertrend
+        self.st_factor = settings.get('supertrend_factor', 3.0)
+        self.st_period = settings.get('supertrend_period', 10)
+
+    def _calculate_supertrend(self, df: pd.DataFrame):
+        """
+        Berechnet Supertrend Trend für ein DataFrame.
+        Gibt ein Array mit 1 (Grün/Long) oder -1 (Rot/Short) zurück.
+        """
+        if df.empty or len(df) < self.st_period:
+            return None
+        
+        st_atr = ta.volatility.average_true_range(df['high'], df['low'], df['close'], window=self.st_period)
+        hl2 = (df['high'] + df['low']) / 2
+        basic_upper = hl2 + (self.st_factor * st_atr)
+        basic_lower = hl2 - (self.st_factor * st_atr)
+        
+        close = df['close'].values
+        final_upper = np.zeros(len(df))
+        final_lower = np.zeros(len(df))
+        trend = np.zeros(len(df))
+        
+        final_upper[0] = basic_upper.iloc[0]
+        final_lower[0] = basic_lower.iloc[0]
+        trend[0] = 1
+        
+        for i in range(1, len(df)):
+            curr_basic_upper = basic_upper.iloc[i]
+            curr_basic_lower = basic_lower.iloc[i]
+            prev_final_upper = final_upper[i-1]
+            prev_final_lower = final_lower[i-1]
+            prev_close = close[i-1]
+            curr_close = close[i]
+            prev_trend = trend[i-1]
+            
+            if (curr_basic_upper < prev_final_upper) or (prev_close > prev_final_upper):
+                final_upper[i] = curr_basic_upper
+            else:
+                final_upper[i] = prev_final_upper
+            
+            if (curr_basic_lower > prev_final_lower) or (prev_close < prev_final_lower):
+                final_lower[i] = curr_basic_lower
+            else:
+                final_lower[i] = prev_final_lower
+            
+            if prev_trend == 1:
+                if curr_close <= final_lower[i]:
+                    trend[i] = -1
+                else:
+                    trend[i] = 1
+            else:
+                if curr_close >= final_upper[i]:
+                    trend[i] = 1
+                else:
+                    trend[i] = -1
+        
+        return trend
 
     def calculate_indicators(self, df: pd.DataFrame):
-        """Berechnet alle benötigten Indikatoren inkl. Supertrend."""
+        """Berechnet alle benötigten Indikatoren (ohne Supertrend - wird vom HTF gemanagt)."""
         # 1. EMAs
         df['ema_fast'] = ta.trend.ema_indicator(df['close'], window=self.length)
         df['ema_slow'] = ta.trend.ema_indicator(df['close'], window=self.length * 2)
@@ -41,83 +96,15 @@ class PredictorEngine:
         adx_ind = ta.trend.ADXIndicator(df['high'], df['low'], df['close'], window=14)
         df['adx'] = adx_ind.adx()
 
-        # 4. ATR (für Volatilität & Supertrend)
+        # 4. ATR (für Volatilität)
         df['atr'] = ta.volatility.average_true_range(df['high'], df['low'], df['close'], window=self.length)
 
-        # 5. --- Supertrend Berechnung (Manuell & Robust) ---
-        # Wir nutzen eine numpy-basierte Berechnung für Geschwindigkeit
-        
-        # Basis-ATR für Supertrend (meist Period 10, Factor 3)
-        st_atr = ta.volatility.average_true_range(df['high'], df['low'], df['close'], window=self.st_period)
-        
-        # HL2 (High+Low)/2
-        hl2 = (df['high'] + df['low']) / 2
-        
-        # Basic Bands
-        basic_upper = hl2 + (self.st_factor * st_atr)
-        basic_lower = hl2 - (self.st_factor * st_atr)
-        
-        # Initialisierung der Arrays für die iterative Berechnung
-        close = df['close'].values
-        final_upper = np.zeros(len(df))
-        final_lower = np.zeros(len(df))
-        supertrend = np.zeros(len(df))
-        trend = np.zeros(len(df)) # 1 = Grün/Long, -1 = Rot/Short
-        
-        # Erster Wert Initialisierung
-        final_upper[0] = basic_upper.iloc[0]
-        final_lower[0] = basic_lower.iloc[0]
-        trend[0] = 1
-
-        # Iterative Berechnung (Numba-Style Logik)
-        for i in range(1, len(df)):
-            curr_basic_upper = basic_upper.iloc[i]
-            curr_basic_lower = basic_lower.iloc[i]
-            prev_final_upper = final_upper[i-1]
-            prev_final_lower = final_lower[i-1]
-            prev_close = close[i-1]
-            curr_close = close[i]
-            prev_trend = trend[i-1]
-
-            # Final Upper Band Calculation
-            if (curr_basic_upper < prev_final_upper) or (prev_close > prev_final_upper):
-                final_upper[i] = curr_basic_upper
-            else:
-                final_upper[i] = prev_final_upper
-
-            # Final Lower Band Calculation
-            if (curr_basic_lower > prev_final_lower) or (prev_close < prev_final_lower):
-                final_lower[i] = curr_basic_lower
-            else:
-                final_lower[i] = prev_final_lower
-
-            # Trend Calculation
-            if prev_trend == 1: # War Long (Grün)
-                if curr_close <= final_lower[i]:
-                    trend[i] = -1 # Wechsel zu Short (Rot)
-                else:
-                    trend[i] = 1
-            else: # War Short (Rot)
-                if curr_close >= final_upper[i]:
-                    trend[i] = 1 # Wechsel zu Long (Grün)
-                else:
-                    trend[i] = -1
-            
-            # Supertrend Wert setzen (für Plotting, hier zweitrangig)
-            if trend[i] == 1:
-                supertrend[i] = final_lower[i]
-            else:
-                supertrend[i] = final_upper[i]
-
-        df['st_trend'] = trend
-        # ---------------------------------------------------
-
-        # 6. Bollinger Bands (für Squeeze Detection)
+        # 5. Bollinger Bands (für Squeeze Detection)
         bb_ind = ta.volatility.BollingerBands(df['close'], window=20, window_dev=2.0)
         df['bb_width'] = bb_ind.bollinger_wband()
         df['avg_bb_width'] = df['bb_width'].rolling(window=50).mean()
         
-        # 7. Volumen-Analyse
+        # 6. Volumen-Analyse
         if 'volume' in df.columns:
             df['avg_volume'] = df['volume'].rolling(window=self.volume_lookback).mean()
             df['volume_ratio'] = df['volume'] / df['avg_volume']
@@ -127,10 +114,10 @@ class PredictorEngine:
 
         return df
 
-    def get_score(self, row, mtf_bullish=None):
+    def get_score(self, row, mtf_bullish=None, htf_st_trend=None):
         """
         Berechnet den Score für eine einzelne Kerze.
-        Nutzt Indikatoren UND das Supertrend-Veto.
+        Nutzt Indikatoren UND das übergeordnete Supertrend-Veto (HTF-basiert).
         """
         # 1. Trend Score (EMA Cross)
         bullish_ema = row['ema_fast'] > row['ema_slow']
@@ -172,46 +159,54 @@ class PredictorEngine:
         raw_score = trend_score + rsi_bias + rej_bias + mtf_penalty
         veto_reason = None
         
-        # 5. Supertrend Veto (Der "Boss"-Filter)
-        if self.use_supertrend_filter:
-            st_trend = row['st_trend'] # 1.0 (Grün) oder -1.0 (Rot)
-            
-            # Fall A: Supertrend Grün (Nur Longs erlaubt)
-            if st_trend == 1:
-                if raw_score < 0: 
-                    # Signal ist Short (negativ), aber Trend ist Grün
-                    veto_reason = "ST gruen: blockiert Short-Bias"
-                    return 0.0, veto_reason
-                
-            # Fall B: Supertrend Rot (Nur Shorts erlaubt)
-            elif st_trend == -1:
-                if raw_score > 0:
-                    # Signal ist Long (positiv), aber Trend ist Rot
-                    veto_reason = "ST rot: blockiert Long-Bias"
-                    return 0.0, veto_reason
+        # 5. HTF-Supertrend Veto (Der "Boss"-Filter auf übergeordnetem Timeframe)
+        if self.use_supertrend_filter and self.use_htf_supertrend:
+            if htf_st_trend is not None:
+                # Fall A: HTF-Supertrend Grün (Nur Longs erlaubt)
+                if htf_st_trend == 1:
+                    if raw_score < 0: 
+                        # Signal ist Short (negativ), aber HTF-Trend ist Grün
+                        veto_reason = "HTF-ST gruen: blockiert Short-Bias"
+                        return 0.0, veto_reason
+                    
+                # Fall B: HTF-Supertrend Rot (Nur Shorts erlaubt)
+                elif htf_st_trend == -1:
+                    if raw_score > 0:
+                        # Signal ist Long (positiv), aber HTF-Trend ist Rot
+                        veto_reason = "HTF-ST rot: blockiert Long-Bias"
+                        return 0.0, veto_reason
 
         return raw_score, veto_reason
 
     def analyze(self, df: pd.DataFrame, htf_df: pd.DataFrame = None):
         """
         Hauptfunktion: Verarbeitet die Daten und gibt die letzte Vorhersage zurück.
+        HTF-Supertrend wird als übergeordneter Filter verwendet.
         """
         if df.empty: return None
 
         df = self.calculate_indicators(df.copy())
         current_candle = df.iloc[-1]
 
-        # MTF Logik
+        # MTF & HTF-Supertrend Logik
         mtf_bullish = None
+        htf_st_trend = None
+        
         if self.use_mtf and htf_df is not None and not htf_df.empty:
             htf_copy = htf_df.copy()
             htf_copy['ema_mtf'] = ta.trend.ema_indicator(htf_copy['close'], window=self.length * 2)
             last_htf = htf_copy.iloc[-1]
             if not pd.isna(last_htf['ema_mtf']):
                 mtf_bullish = last_htf['close'] > last_htf['ema_mtf']
+        
+        # HTF-Supertrend Berechnung (übergeordneter Filter)
+        if self.use_supertrend_filter and self.use_htf_supertrend and htf_df is not None and not htf_df.empty:
+            htf_trend = self._calculate_supertrend(htf_df.copy())
+            if htf_trend is not None and len(htf_trend) > 0:
+                htf_st_trend = htf_trend[-1]  # Letzter Wert des HTF-Trends
 
-        # Score berechnen (inkl. Supertrend Check)
-        score, veto_reason = self.get_score(current_candle, mtf_bullish)
+        # Score berechnen (inkl. HTF-Supertrend Check)
+        score, veto_reason = self.get_score(current_candle, mtf_bullish, htf_st_trend)
 
         # Choppy Check (ADX)
         is_choppy = False
@@ -242,6 +237,6 @@ class PredictorEngine:
             "atr": current_candle['atr'],
             "close": current_candle['close'],
             "mtf_bullish": mtf_bullish,
-            "st_trend": current_candle.get('st_trend', 0),
+            "htf_st_trend": htf_st_trend,  # Neuer Output: Übergeordneter Supertrend
             "volume_ratio": current_candle.get('volume_ratio', 1.0)
         }
