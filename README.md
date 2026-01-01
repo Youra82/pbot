@@ -30,16 +30,17 @@ PBot ist ein hochentwickelter Trading-Bot, der Smart Money Concepts (SMC) mit kl
 ### 🔍 Strategie-Visualisierung
 ```mermaid
 flowchart LR
-  A[Daily OHLCV] --> B[Daily Predictor
-  (Bias long/short)]
-  A --> C[Intraday Features
-  RSI/ADX/Wick/Volume/Supertrend]
-  B & C --> D[SMC Context
-  Liquidity | Breaker | MSB]
-  D --> E[Signal-Score]
-  E --> F[Risk Engine
-  SL/TP + optional Trail]
-  F --> G[Order Router (CCXT)]
+    A["Daily OHLCV"]
+    B["Daily Predictor<br/>Bias long/short"]
+    C["Intraday Features<br/>RSI/ADX/Wick/Volume/Supertrend"]
+    D["SMC Context<br/>Liquidity | Breaker | MSB"]
+    E["Signal-Score"]
+    F["Risk Engine<br/>SL/TP + optional Trail"]
+    G["Order Router (CCXT)"]
+
+    A --> B
+    A --> C
+    B & C --> D --> E --> F --> G
 ```
 
 ### 📈 Trade-Beispiel (TP/SL/Trailing)
