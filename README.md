@@ -110,7 +110,7 @@ OHLCV → Feature-Engine (RSI/ADX/Vol/Wick) → Predictor-Score → Bias-Filter 
 ### 1. Repository klonen
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Youra82/pbot.git
 cd pbot
 ```
 
