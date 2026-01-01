@@ -28,6 +28,7 @@ class PortfolioRiskManager:
         self.max_concurrent_positions = self.config.get('max_concurrent_positions', 3)
         self.max_daily_loss_pct = self.config.get('max_daily_loss_pct', 5.0)
         self.max_total_risk_pct = self.config.get('max_total_risk_pct', 4.0)  # Max 4% Gesamt-Exposure
+        self.min_adjusted_risk_pct = self.config.get('min_adjusted_risk_pct', 0.1)  # Minimum sinnvolle Positionsgroesse nach Kappung
         
         # State laden
         self.state = self._load_state()
@@ -64,7 +65,7 @@ class PortfolioRiskManager:
         with open(RISK_STATE_FILE, 'w') as f:
             json.dump(self.state, f, indent=2)
     
-    def can_open_position(self, symbol: str, risk_pct: float, logger=None) -> tuple[bool, str]:
+    def can_open_position(self, symbol: str, risk_pct: float, logger=None) -> tuple[bool, str, float]:
         """
         Prüft ob eine neue Position eröffnet werden darf
         
@@ -74,38 +75,49 @@ class PortfolioRiskManager:
             logger: Optional logger
             
         Returns:
-            (erlaubt: bool, grund: str)
+            (erlaubt: bool, grund: str, verwendetes_risk_pct: float)
         """
         # 1. Check: Max Concurrent Positions
         active_count = len(self.state['active_positions'])
         if active_count >= self.max_concurrent_positions:
             msg = f"🚫 Max Positionen erreicht ({active_count}/{self.max_concurrent_positions})"
             if logger: logger.warning(msg)
-            return False, msg
+            return False, msg, risk_pct
         
         # 2. Check: Daily Loss Limit
         daily_loss_pct = abs(min(0, self.state['daily_pnl']))
         if daily_loss_pct >= self.max_daily_loss_pct:
             msg = f"🚫 Daily Loss Limit erreicht ({daily_loss_pct:.2f}% / {self.max_daily_loss_pct}%)"
             if logger: logger.warning(msg)
-            return False, msg
+            return False, msg, risk_pct
         
         # 3. Check: Total Risk Exposure
         current_total_risk = sum(self.state['active_positions'].values())
         new_total_risk = current_total_risk + risk_pct
         
         if new_total_risk > self.max_total_risk_pct:
-            msg = f"🚫 Max Total Risk erreicht ({new_total_risk:.2f}% / {self.max_total_risk_pct}%)"
+            available_risk = max(self.max_total_risk_pct - current_total_risk, 0.0)
+            if available_risk < self.min_adjusted_risk_pct:
+                msg = f"🚫 Max Total Risk erreicht ({new_total_risk:.2f}% / {self.max_total_risk_pct}%)"
+                if logger: logger.warning(msg)
+                return False, msg, risk_pct
+
+            # Kappe die Positionsgroesse auf den noch freien Risiko-Bereich
+            adjusted_risk = round(available_risk, 4)
+            msg = (
+                f"⚠️ Risiko gekappt auf {adjusted_risk:.2f}% wegen Portfolio-Limit "
+                f"({current_total_risk:.2f}% / {self.max_total_risk_pct}%)"
+            )
             if logger: logger.warning(msg)
-            return False, msg
+            return True, msg, adjusted_risk
         
         # 4. Check: Position bereits offen für dieses Symbol?
         if symbol in self.state['active_positions']:
             msg = f"🚫 Position für {symbol} bereits aktiv"
             if logger: logger.warning(msg)
-            return False, msg
+            return False, msg, risk_pct
         
-        return True, "OK"
+        return True, "OK", risk_pct
     
     def register_position(self, symbol: str, risk_pct: float, logger=None):
         """

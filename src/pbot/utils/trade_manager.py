@@ -154,13 +154,18 @@ def check_and_open_new_position(exchange, model, scaler, params, telegram_config
         risk_manager = get_risk_manager({
             'max_concurrent_positions': 3,
             'max_daily_loss_pct': 5.0,
-            'max_total_risk_pct': 4.0
+            'max_total_risk_pct': 4.0,
+            'min_adjusted_risk_pct': 0.1,
         })
         
-        can_trade, reason = risk_manager.can_open_position(symbol, effective_risk_pct, logger)
+        can_trade, reason, allowed_risk_pct = risk_manager.can_open_position(symbol, effective_risk_pct, logger)
         if not can_trade:
             logger.warning(f"Portfolio Risk Check fehlgeschlagen: {reason}")
             return
+
+        if allowed_risk_pct != effective_risk_pct:
+            logger.info(f"Passe Risiko auf {allowed_risk_pct:.2f}% an (statt {effective_risk_pct:.2f}%)")
+            effective_risk_pct = allowed_risk_pct
 
         # --------------------------------------------------- #
         # 2. Margin & Leverage setzen
@@ -201,9 +206,9 @@ def check_and_open_new_position(exchange, model, scaler, params, telegram_config
 
         if raw_risk_pct > MAX_RISK:
             logger.warning(f"⚠️ Config-Risiko {raw_risk_pct}% ist zu hoch! Deckle HART auf {MAX_RISK}%.")
-            effective_risk_pct = MAX_RISK
-        else:
-            effective_risk_pct = raw_risk_pct
+
+        # Endgueltiges Risiko ist das Minimum aus Config-Cap und Risk-Manager-Kappung
+        effective_risk_pct = min(effective_risk_pct, MAX_RISK)
 
         risk_pct = effective_risk_pct / 100.0
         risk_usdt = balance * risk_pct
