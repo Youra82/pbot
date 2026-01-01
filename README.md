@@ -27,6 +27,28 @@ PBot ist ein hochentwickelter Trading-Bot, der Smart Money Concepts (SMC) mit kl
 - **MTF-Bestätigung**: Höherer Timeframe dient als Bias-Filter, um Trades nur in Trendrichtung zuzulassen.
 - **Risk Layer**: Fixer SL/TP, optionales Trail; Positionsgröße abhängig von Volatilität und Konto-Risk.
 
+### 🔍 Strategie-Visualisierung
+```mermaid
+flowchart LR
+  A[Daily OHLCV] --> B[Daily Predictor
+  (Bias long/short)]
+  A --> C[Intraday Features
+  RSI/ADX/Wick/Volume/Supertrend]
+  B & C --> D[SMC Context
+  Liquidity | Breaker | MSB]
+  D --> E[Signal-Score]
+  E --> F[Risk Engine
+  SL/TP + optional Trail]
+  F --> G[Order Router (CCXT)]
+```
+
+### 📈 Trade-Beispiel (TP/SL/Trailing)
+- Bias: Daily Predictor = Long.
+- Entry: Intraday Breaker-Block + RSI > 50 + ADX > 20; Volume-Ratio > Schwelle.
+- Initial SL: Unter Liquidity Sweep Low / letzter Swing.
+- TP: 2–3×SL-Distanz oder strukturelles Target (z.B. vorigem High).
+- Trailing: Nach +1×SL Distanz Trail unter letztes Higher Low nachziehen, um Trendverlängerung mitzunehmen.
+
 Architektur-Skizze:
 ```
 OHLCV → Feature-Engine (RSI/ADX/Vol/Wick) → Predictor-Score → Bias-Filter (MTF) → Risk Engine → Order Router (CCXT)
