@@ -170,6 +170,7 @@ class PredictorEngine:
 
         # Berechne den vorläufigen Score
         raw_score = trend_score + rsi_bias + rej_bias + mtf_penalty
+        veto_reason = None
         
         # 5. Supertrend Veto (Der "Boss"-Filter)
         if self.use_supertrend_filter:
@@ -179,15 +180,17 @@ class PredictorEngine:
             if st_trend == 1:
                 if raw_score < 0: 
                     # Signal ist Short (negativ), aber Trend ist Grün
-                    return 0.0 # VETO! Neutralisieren.
+                    veto_reason = "ST gruen: blockiert Short-Bias"
+                    return 0.0, veto_reason
                 
             # Fall B: Supertrend Rot (Nur Shorts erlaubt)
             elif st_trend == -1:
                 if raw_score > 0:
                     # Signal ist Long (positiv), aber Trend ist Rot
-                    return 0.0 # VETO! Neutralisieren.
+                    veto_reason = "ST rot: blockiert Long-Bias"
+                    return 0.0, veto_reason
 
-        return raw_score
+        return raw_score, veto_reason
 
     def analyze(self, df: pd.DataFrame, htf_df: pd.DataFrame = None):
         """
@@ -208,7 +211,7 @@ class PredictorEngine:
                 mtf_bullish = last_htf['close'] > last_htf['ema_mtf']
 
         # Score berechnen (inkl. Supertrend Check)
-        score = self.get_score(current_candle, mtf_bullish)
+        score, veto_reason = self.get_score(current_candle, mtf_bullish)
 
         # Choppy Check (ADX)
         is_choppy = False
@@ -232,6 +235,7 @@ class PredictorEngine:
 
         return {
             "score": score,
+            "supertrend_veto": veto_reason,
             "is_choppy": is_choppy,
             "is_squeeze": is_squeeze,
             "is_low_volume": is_low_volume,

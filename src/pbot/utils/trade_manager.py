@@ -131,6 +131,13 @@ def check_and_open_new_position(exchange, model, scaler, params, telegram_config
         # Die Engine berechnet intern ATR, RSI, Score, etc.
         analysis_result = predictor.analyze(recent_data, htf_data)
 
+        # Supertrend-Filter Logging (zeigt, ob veto erfolgte)
+        st_trend = analysis_result.get('st_trend') if analysis_result else None
+        st_veto = analysis_result.get('supertrend_veto') if analysis_result else None
+        if st_veto:
+            trend_txt = 'LONG' if st_trend == 1 else 'SHORT' if st_trend == -1 else 'N/A'
+            logger.info(f"Supertrend-Filter aktiv: {st_veto} (Trend: {trend_txt})")
+
         # Signal abrufen
         signal_side, signal_price = get_pbot_signal(analysis_result, params)
 
