@@ -219,34 +219,7 @@ Logverzeichnis:
 mkdir -p /home/ubuntu/pbot/logs
 ```
 
-### Als Systemd Service (Linux)
 
-```bash
-sudo nano /etc/systemd/system/pbot.service
-```
-
-```ini
-[Unit]
-Description=PBot Trading System
-After=network.target
-
-[Service]
-Type=simple
-User=your-user
-WorkingDirectory=/path/to/pbot
-ExecStart=/path/to/pbot/.venv/bin/python master_runner.py
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-sudo systemctl enable pbot
-sudo systemctl start pbot
-sudo systemctl status pbot
-```
 
 ---
 
@@ -322,12 +295,7 @@ tail -f logs/error.log
 tail -n 100 logs/pbot_BTCUSDTUSDT_4h.log
 ```
 
-### Performance-Metriken
 
-```bash
-python analyze_real_trades_detailed.py
-python compare_real_vs_backtest.py
-```
 
 ---
 
@@ -348,12 +316,7 @@ chmod +x update.sh
 bash ./update.sh
 ```
 
-### Log-Rotation
 
-```bash
-find logs/ -name "*.log" -type f -mtime +30 -exec gzip {} \;
-find logs/ -name "*.log.gz" -type f -mtime +90 -delete
-```
 
 ### Tests ausführen
 
@@ -361,36 +324,6 @@ find logs/ -name "*.log.gz" -type f -mtime +90 -delete
 ./run_tests.sh
 pytest tests/test_strategy.py -v
 pytest --cov=src tests/
-```
-
----
-
-## 🔧 Nützliche Befehle
-
-### Konfiguration
-
-```bash
-python -c "import json; print(json.load(open('settings.json')))"
-cp settings.json settings.json.backup.$(date +%Y%m%d)
-diff settings.json settings.json.backup
-```
-
-### Prozess-Management
-
-```bash
-ps aux | grep python | grep pbot
-pgrep -f master_runner.py
-pkill -f master_runner.py
-pkill -9 -f master_runner.py
-```
-
-### Debugging
-
-```bash
-export PBOT_DEBUG=1
-python master_runner.py
-tail -f logs/cron.log | grep -i "signal\|trade\|smc"
-python -m pdb master_runner.py
 ```
 
 ---
