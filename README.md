@@ -368,27 +368,27 @@ Um eine sofortige Optimierung zu starten (ignoriert das Zeitintervall):
 
 ```bash
 # Letzten Optimierungszeitpunkt löschen (erzwingt Neustart)
-rm /home/ubuntu/pbot/data/cache/.last_optimization_run
+rm ~/pbot/data/cache/.last_optimization_run
 
 # Master Runner starten (prüft ob Optimierung fällig ist)
-cd /home/ubuntu/pbot && .venv/bin/python3 master_runner.py
+cd ~/pbot && .venv/bin/python3 master_runner.py
 ```
 
 ### Optimizer-Logs überwachen
 
 ```bash
 # Optimizer-Log live mitverfolgen
-tail -f /home/ubuntu/pbot/logs/optimizer_output.log
+tail -f ~/pbot/logs/optimizer_output.log
 
 # Letzte 50 Zeilen des Optimizer-Logs anzeigen
-tail -50 /home/ubuntu/pbot/logs/optimizer_output.log
+tail -50 ~/pbot/logs/optimizer_output.log
 ```
 
 ### Optimierungsergebnisse ansehen
 
 ```bash
 # Beste gefundene Parameter anzeigen (erste 50 Zeilen)
-cat /home/ubuntu/pbot/artifacts/results/optimization_results.json | head -50
+cat ~/pbot/artifacts/results/optimization_results.json | head -50
 ```
 
 ### Optimizer-Prozess überwachen
