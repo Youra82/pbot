@@ -67,12 +67,15 @@ def load_data(symbol, timeframe, start_date_str, end_date_str):
         print(f"Fehler: {e}")
         return pd.DataFrame()
 
-def run_pbot_backtest(data, strategy_params, risk_params, start_capital=1000, verbose=False):
+def run_pbot_backtest(data, strategy_params, risk_params, start_capital=1000, verbose=False, return_equity=False):
     """
     Backtest Logik - EXAKT wie Portfolio Simulator.
     """
     if data.empty or len(data) < 50:
-        return {"total_pnl_pct": -100, "trades_count": 0, "win_rate": 0, "max_drawdown_pct": 1.0, "end_capital": start_capital}
+        empty_result = {"total_pnl_pct": -100, "trades_count": 0, "win_rate": 0, "max_drawdown_pct": 1.0, "end_capital": start_capital, "trades": []}
+        if return_equity:
+            return empty_result, []
+        return empty_result
 
     # 1. Indikatoren
     engine = PredictorEngine(strategy_params)
@@ -91,6 +94,8 @@ def run_pbot_backtest(data, strategy_params, risk_params, start_capital=1000, ve
 
     position = None
     pending_order = None # {side, atr}
+    trades_list = []  # Für Chart-Visualisierung
+    equity_snapshots = []  # Für Equity Curve
 
     # Risk Parameter
     risk_reward_ratio = float(risk_params.get('risk_reward_ratio', 2.0))
@@ -122,6 +127,10 @@ def run_pbot_backtest(data, strategy_params, risk_params, start_capital=1000, ve
 
     for i, current_candle in enumerate(records):
         if equity <= 0: break
+        
+        # Equity Snapshot bei jeder Kerze
+        timestamp = data.index[i]
+        equity_snapshots.append({'timestamp': timestamp, 'equity': equity})
 
         # --- A) PENDING ORDER (Entry @ Open) ---
         if not position and pending_order:
@@ -177,7 +186,8 @@ def run_pbot_backtest(data, strategy_params, risk_params, start_capital=1000, ve
                             'stop_loss': sl_price, 'take_profit': tp_price,
                             'notional': final_notional,
                             'trailing_active': False, 'activation_price': act_price,
-                            'peak_price': entry_price, 'callback_rate': cb_rate
+                            'peak_price': entry_price, 'callback_rate': cb_rate,
+                            'entry_time': timestamp  # Für Trade-Visualisierung
                         }
 
             pending_order = None
@@ -231,6 +241,18 @@ def run_pbot_backtest(data, strategy_params, risk_params, start_capital=1000, ve
 
                 if (pnl_usd - costs) > 0: wins_count += 1
                 trades_count += 1
+                
+                # Trade für Visualisierung speichern
+                pos_side = 'long' if position['side'] == 'long' else 'short'
+                entry_time = position.get('entry_time')
+                entry_time_str = entry_time.isoformat() if hasattr(entry_time, 'isoformat') else str(entry_time)
+                exit_time_str = timestamp.isoformat() if hasattr(timestamp, 'isoformat') else str(timestamp)
+                trade_record = {
+                    f"entry_{pos_side}": {'time': entry_time_str, 'price': position['entry_price']},
+                    f"exit_{pos_side}": {'time': exit_time_str, 'price': exit_price}
+                }
+                trades_list.append(trade_record)
+                
                 position = None
 
                 # Drawdown Check
@@ -266,10 +288,15 @@ def run_pbot_backtest(data, strategy_params, risk_params, start_capital=1000, ve
     final_pnl = ((equity - start_capital) / start_capital) * 100 if start_capital > 0 else 0
     win_rate = (wins_count / trades_count * 100) if trades_count > 0 else 0
 
-    return {
+    stats = {
         "total_pnl_pct": final_pnl,
         "trades_count": trades_count,
         "win_rate": win_rate,
         "max_drawdown_pct": max_drawdown_pct,
-        "end_capital": equity
+        "end_capital": equity,
+        "trades": trades_list
     }
+    
+    if return_equity:
+        return stats, equity_snapshots
+    return stats
