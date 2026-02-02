@@ -258,7 +258,8 @@ def run_portfolio_simulation(start_capital, strategies_data, start_date, end_dat
             # Simple MTF Check
             mtf_bullish = None
             
-            score = engine.get_score(current_candle, mtf_bullish)
+            # engine.get_score returns (score, veto_reason)
+            score, veto_reason = engine.get_score(current_candle, mtf_bullish)
 
             is_choppy = False
             if engine.use_adx:
@@ -267,6 +268,7 @@ def run_portfolio_simulation(start_capital, strategies_data, start_date, end_dat
             # Helper dict for signal logic
             analysis_result = {
                 "score": score,
+                "supertrend_veto": veto_reason,
                 "is_choppy": is_choppy,
                 "close": current_candle['close'],
                 # ATR hier ist für den Signal-Zeitpunkt (Close)
