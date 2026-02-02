@@ -263,7 +263,7 @@ def run_pbot_backtest(data, strategy_params, risk_params, start_capital=1000, ve
         # --- C) SIGNAL (Close) ---
         if not position and not pending_order:
             # Engine Logic
-            score = engine.get_score(current_candle, None)
+            score, veto_reason = engine.get_score(current_candle, None)
 
             is_choppy = False
             if engine.use_adx:
@@ -271,6 +271,7 @@ def run_pbot_backtest(data, strategy_params, risk_params, start_capital=1000, ve
 
             analysis_result = {
                 'score': score,
+                'supertrend_veto': veto_reason,
                 'is_choppy': is_choppy,
                 'close': current_candle['close'],
                 'atr': current_candle.get('atr', current_candle['close']*0.01)
