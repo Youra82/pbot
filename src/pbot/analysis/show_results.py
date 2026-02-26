@@ -287,6 +287,17 @@ if __name__ == "__main__":
     parser.add_argument('--target_max_drawdown', default=30.0, type=float)
     args = parser.parse_args()
 
+    # Mode 4: Interaktive Charts (keine Datumseingabe noetig)
+    if args.mode == '4':
+        try:
+            from pbot.analysis.interactive_status import main as interactive_main
+            interactive_main()
+        except Exception as e:
+            print(f"Fehler beim Ausfuehren der interaktiven Charts: {e}")
+            import traceback
+            traceback.print_exc()
+        sys.exit(0)
+
     print("\n--- Bitte Konfiguration für den Backtest festlegen ---")
     start_date = input(f"Startdatum (JJJJ-MM-TT) [Standard: 2023-01-01]: ") or "2023-01-01"
     end_date = input(f"Enddatum (JJJJ-MM-TT) [Standard: Heute]: ") or date.today().strftime("%Y-%m-%d")
