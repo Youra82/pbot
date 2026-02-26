@@ -21,7 +21,7 @@ warnings.filterwarnings('ignore')
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 sys.path.append(os.path.join(PROJECT_ROOT, 'src'))
 
-from pbot.analysis.backtester import load_data, run_pbot_backtest
+from pbot.analysis.backtester import load_data
 from pbot.strategy.predictor_engine import PredictorEngine
 from pbot.strategy.trade_logic import get_pbot_signal
 
@@ -278,7 +278,7 @@ def build_equity_curve(df: pd.DataFrame, trades: list, start_capital: float) -> 
 # ---------------------------------------------------------------------------
 
 def create_interactive_chart(symbol, timeframe, df, trades, equity_df,
-                              stats, start_date, end_date, window=None,
+                              start_date, end_date, window=None,
                               start_capital=1000):
     try:
         import plotly.graph_objects as go
@@ -367,17 +367,28 @@ def create_interactive_chart(symbol, timeframe, df, trades, equity_df,
             showlegend=True,
         ), secondary_y=True)
 
-    # ===== TITEL =====
-    pnl_pct = stats.get('total_pnl_pct', 0)
+    # ===== TITEL (alle Stats aus extract_trades + equity_df) =====
     end_cap = equity_df['equity'].iloc[-1] if not equity_df.empty else start_capital
+    pnl_pct = ((end_cap - start_capital) / start_capital * 100) if start_capital > 0 else 0
+
+    trades_count = len(trades)
+    wins = sum(1 for t in trades if t['pnl_usd'] > 0)
+    win_rate = (wins / trades_count * 100) if trades_count > 0 else 0.0
+
+    max_dd_pct = 0.0
+    if not equity_df.empty and 'equity' in equity_df.columns:
+        peak = equity_df['equity'].cummax()
+        dd = (equity_df['equity'] - peak) / peak
+        max_dd_pct = abs(dd.min()) * 100
+
     title_text = (
         f"{symbol} {timeframe} - PBot Predictor | "
         f"Start: ${start_capital:.0f} | "
         f"End: ${end_cap:.0f} | "
         f"PnL: {'+' if pnl_pct >= 0 else ''}{pnl_pct:.2f}% | "
-        f"Max DD: {stats.get('max_drawdown_pct', 0) * 100:.2f}% | "
-        f"Trades: {stats.get('trades_count', len(trades))} | "
-        f"Win Rate: {stats.get('win_rate', 0):.1f}%"
+        f"Max DD: {max_dd_pct:.2f}% | "
+        f"Trades: {trades_count} | "
+        f"Win Rate: {win_rate:.1f}%"
     )
 
     fig.update_layout(
@@ -456,10 +467,6 @@ def main():
             trades = extract_trades(df.copy(), strategy_params, risk_params, start_capital)
             logger.info(f"  {len(trades)} Trades gefunden")
 
-            # Stats (offizieller Backtest)
-            stats = run_pbot_backtest(df.copy(), strategy_params, risk_params,
-                                      start_capital, verbose=False)
-
             # Equity Curve
             equity_df = build_equity_curve(df, trades, start_capital)
 
@@ -468,7 +475,7 @@ def main():
             fig = create_interactive_chart(
                 symbol, timeframe, df,
                 trades, equity_df,
-                stats, start_date, end_date,
+                start_date, end_date,
                 window, start_capital,
             )
 
