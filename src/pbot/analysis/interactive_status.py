@@ -223,7 +223,7 @@ def extract_trades(df: pd.DataFrame, strategy_params: dict, risk_params: dict,
 
             # C) SIGNAL (Close)
             if not position and not pending_order:
-                score = engine.get_score(current_candle, None)
+                score, _ = engine.get_score(current_candle, None)
                 is_choppy = False
                 if engine.use_adx:
                     if current_candle.get('adx', 0) < engine.adx_threshold:
