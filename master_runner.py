@@ -33,8 +33,7 @@ def main():
         return
 
     print("=======================================================")
-    # *** Geändert: Name ***
-    print("TitanBot Master Runner v1.0")
+    print("PBot Master Runner v1.0")
     print("=======================================================")
 
     try:
