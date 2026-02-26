@@ -168,7 +168,7 @@ def run_portfolio_simulation(start_capital, strategies_data, start_date, end_dat
             cb_rate = risk.get('trailing_stop_callback_rate_pct', 0.5) / 100.0
 
             open_positions[key] = {
-                'side': signal_side,
+                'side': 'long' if signal_side == 'buy' else 'short',
                 'entry_price': entry_price,
                 'stop_loss': sl_price,
                 'take_profit': tp_price,
