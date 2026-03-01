@@ -184,13 +184,13 @@ Bearbeite `settings.json`:
 
 ```bash
 # Master Runner starten
-python master_runner.py
+cd /home/ubuntu/pbot && .venv/bin/python3 master_runner.py
 ```
 
 ### Manuell starten / Cronjob testen
 
 ```bash
-cd /home/ubuntu/pbot && /home/ubuntu/pbot/.venv/bin/python3 /home/ubuntu/pbot/master_runner.py
+cd /home/ubuntu/pbot && .venv/bin/python3 master_runner.py
 ```
 
 Der Master Runner:
@@ -210,7 +210,7 @@ crontab -e
 
 ```
 # Starte den PBot Master-Runner alle 15 Minuten
-*/15 * * * * /usr/bin/flock -n /home/ubuntu/pbot/pbot.lock /bin/sh -c "cd /home/ubuntu/pbot && /home/ubuntu/pbot/.venv/bin/python3 /home/ubuntu/pbot/master_runner.py >> /home/ubuntu/pbot/logs/cron.log 2>&1"
+*/15 * * * * /usr/bin/flock -n /home/ubuntu/pbot/pbot.lock /bin/sh -c "cd /home/ubuntu/pbot && .venv/bin/python3 master_runner.py >> /home/ubuntu/pbot/logs/cron.log 2>&1"
 ```
 
 Logverzeichnis:
