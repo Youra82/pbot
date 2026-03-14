@@ -332,6 +332,19 @@ rm -f src/pbot/strategy/configs/config_*.json
 ls -la src/pbot/strategy/configs/config_*.json 2>&1 || echo "✅ Alle Konfigurationsdateien wurden gelöscht"
 ```
 
+#### Configs pushen
+
+Nach einer Optimierung die generierten Config-Dateien und `settings.json` auf GitHub pushen:
+
+```bash
+./push_configs.sh
+```
+
+Das Script:
+- Staged alle `src/pbot/strategy/configs/*.json` + `settings.json`
+- Erstellt automatisch einen Commit mit Zeitstempel
+- Pusht auf `origin/main` (mit automatischem Rebase-Fallback)
+
 
 
 ### Tests ausführen
