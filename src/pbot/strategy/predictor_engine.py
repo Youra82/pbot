@@ -26,6 +26,10 @@ class PredictorEngine:
         self.st_factor = settings.get('supertrend_factor', 3.0)
         self.st_period = settings.get('supertrend_period', 10)
 
+        # --- Harter Trend-Filter (IMMER aktiv, nicht deaktivierbar) ---
+        # Kein Trade wenn ADX unter diesem Wert — verhindert Verluste in Seitwärtsphasen
+        self.min_trend_adx = settings.get('min_trend_adx', 20)
+
     def _calculate_supertrend(self, df: pd.DataFrame):
         """
         Berechnet Supertrend Trend für ein DataFrame.
@@ -199,6 +203,11 @@ class PredictorEngine:
             htf_trend = self._calculate_supertrend(htf_df.copy())
             if htf_trend is not None and len(htf_trend) > 0:
                 htf_st_trend = htf_trend[-1]  # Letzter Wert des HTF-Trends
+
+        # Harter ADX-Filter: Kein Signal wenn kein Trend vorhanden (IMMER aktiv)
+        adx_val = current_candle['adx'] if not pd.isna(current_candle['adx']) else 0
+        if adx_val < self.min_trend_adx:
+            return None  # Seitwärtsmarkt — kein Trade
 
         # Score berechnen (inkl. HTF-Supertrend Check)
         score, veto_reason = self.get_score(current_candle, mtf_bullish, htf_st_trend)
