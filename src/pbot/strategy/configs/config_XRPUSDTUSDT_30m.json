@@ -25,5 +25,9 @@
     "behavior": {
         "use_longs": true,
         "use_shorts": true
+    },
+    "_meta": {
+        "pnl_pct": 142023089.71,
+        "optimized_at": "2026-03-01T15:58:37"
     }
 }
