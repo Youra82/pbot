@@ -132,7 +132,7 @@ def check_and_open_new_position(exchange, model, scaler, params, telegram_config
         analysis_result = predictor.analyze(recent_data, htf_data)
 
         # Supertrend-Filter Logging (zeigt, ob veto erfolgte)
-        st_trend = analysis_result.get('st_trend') if analysis_result else None
+        st_trend = analysis_result.get('htf_st_trend') if analysis_result else None
         st_veto = analysis_result.get('supertrend_veto') if analysis_result else None
         if st_veto:
             trend_txt = 'LONG' if st_trend == 1 else 'SHORT' if st_trend == -1 else 'N/A'
