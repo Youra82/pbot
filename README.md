@@ -446,6 +446,59 @@ Dieses Projekt ist lizenziert unter der MIT License.
 
 ---
 
+## Coin & Timeframe Empfehlungen
+
+PBot ist eine **Smart-Money-Concepts-Strategie mit Daily-Predictor-Bias** — der Daily-Predictor setzt täglich den Bias (Long/Short) basierend auf der Tageskerze, und SMC-Intraday-Signale (Liquidity Sweeps, Breaker Blocks, Market Structure Breaks) liefern die Einträge. Benötigt: Coins mit institutioneller Marktstruktur und erkennbaren Liquiditätszonen.
+
+### Effektive Zeitspannen je Timeframe (MTF-Setup)
+
+| Entry TF | RSI(14) | ADX(20) | ATR(14) | Daily Bias | Empfohlenes HTF | Geeignet |
+|---|---|---|---|---|---|---|
+| 15m | 3.5h | 5h | 3.5h | 1d-Kerze | 1h oder 4h | ⚠️ |
+| 30m | 7h | 10h | 7h | 1d-Kerze | 2h oder 4h | ⚠️ |
+| **1h** | **14h** | **20h** | **14h** | **1d-Kerze** | **4h** | **✅✅** |
+| **2h** | **28h** | **40h** | **28h** | **1d-Kerze** | **4h / 1d** | **✅✅** |
+| **4h** | **56h** | **80h** | **56h** | **1d-Kerze** | **1d** | **✅✅** |
+| 6h | 84h | 120h | 84h | 1d-Kerze | 1d | ✅ |
+| 1d | 14d | 20d | 14d | (selbst HTF) | 1W | ✅ |
+
+Der Daily-Predictor setzt einmal täglich den Bias — dieser Bias ist auf 15m/30m zu grob (ein Tages-Bias für 96 bzw. 48 15m-Kerzen). Auf 1h/2h/4h ist der Daily-Bias sinnvoll: er filtert den Intraday-SMC-Trade in Richtung des Tagesrahmens.
+
+### Coin-Eignung
+
+| Coin | SMC-Struktur | Liquidity-Zonen | Daily-Predictor-Qualität | Bewertung |
+|---|---|---|---|---|
+| **BTC** | Exzellent — stärkste SMC-Struktur in Crypto | Sehr klare Liquiditätspools | Tages-Prognose sehr zuverlässig | ✅✅ Beste Wahl |
+| **ETH** | Exzellent — institutionelle Market Structure | Klare Breaker Blocks | Sehr gute Daily-Vorhersage | ✅✅ Sehr gut |
+| **SOL** | Sehr gut — klare MSBs und Sweeps | Gute Liquiditätszonen | Gute Tages-Prognose | ✅ Gut |
+| **BNB** | Gut — stabile SMC-Struktur | Klare Zonen | Gute Prognose | ✅ Gut |
+| **AVAX** | Gut — explosive Sweeps erkennbar | Gute Liquiditätspools | Mittel-gut | ✅ Gut |
+| **XRP** | Gut — klare Retests bekannter Levels | Gute Liquiditätszonen | Gut in Ranging-Phasen | ✅ Gut |
+| **LINK** | Mittel — explosive Trends erschweren SMC | Unregelmäßige Zonen | Mittel | ⚠️ Mittel |
+| **ARB** | Mittel — junge SMC-Basis | Aufbauend | Mittel | ⚠️ Mittel |
+| **ADA** | Mittel — sehr träge Struktur | Schwache Liquidity Sweeps | Schwache Prognose | ⚠️ Schwach |
+| **DOT** | Schwach — lange unstrukturierte Phasen | Kaum erkennbare Pools | Unzuverlässig | ⚠️ Schwach |
+| **DOGE** | Schlecht — Sentiment übersteuert SMC | Keine validen Zonen | Daily-Predictor nicht anwendbar | ❌ Schlecht |
+| **SHIB/PEPE** | Nicht vorhanden | Keine SMC-Struktur | Nicht anwendbar | ❌❌ Nicht geeignet |
+
+### Empfohlene Kombinationen (Ranking)
+
+| Rang | Kombination | MTF-Setup | Begründung |
+|---|---|---|---|
+| 🥇 1 | **BTC 1h** | Entry: 1h / Bias: 1d | Klarste SMC-Struktur, bester Daily-Predictor, viele Trades |
+| 🥇 1 | **ETH 1h** | Entry: 1h / Bias: 1d | Exzellente SMC-Zonen, gute Tages-Prognose |
+| 🥈 2 | **BTC 4h** | Entry: 4h / Bias: 1d | Weniger aber qualitativ sehr hohe Signale |
+| 🥈 2 | **SOL 1h** | Entry: 1h / Bias: 1d | Explosive Liquidity Sweeps, klare Breaker Blocks |
+| 🥉 3 | **BNB 2h** | Entry: 2h / Bias: 1d | Stabile SMC-Struktur, gute Prognose |
+| 4 | **AVAX 2h** | Entry: 2h / Bias: 1d | Gute Bullmarkt-Performance |
+| ❌ | **15m** | — | Daily-Bias zu grob für 15m Entry, zu viele Fehlsignale |
+| ❌ | **DOGE / SHIB** | — | Kein SMC, kein valider Daily-Predictor |
+
+> **Hinweis:** Der Daily-Predictor-Bias ist besonders stark wenn Tageskerze + Higher-Timeframe-Struktur übereinstimmen. BTC 4h mit 1d-Bias hat die geringste Fehlsignal-Rate.
+
+
+---
+
 ## 🙏 Credits
 
 Entwickelt mit:
