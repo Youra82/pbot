@@ -6,3 +6,8 @@ artifacts/db/*.db
 .venv/
 __pycache__/
 *.pyc
+
+# Secrets
+secret.json
+secret.json.bak
+.env
